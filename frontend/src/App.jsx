@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Header from "./components/Header";
 
 import Home from "./pages/Home";
@@ -9,13 +9,17 @@ import Checkout from "./pages/Checkout";
 import Confirmation from "./pages/Confirmation";
 import Contacts from "./pages/Contacts";
 import Promotions from "./pages/Promotions";
+import Admin from "./pages/Admin";
 
-function App() {
+function AppLayout() {
+  const location = useLocation();
+  const isAdminPage = location.pathname.startsWith("/admin");
+
   return (
-    <BrowserRouter>
-      <Header />
+    <>
+      {!isAdminPage && <Header />}
 
-      <main className="container">
+      <main className={isAdminPage ? "admin-shell" : "container"}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/catalog" element={<Catalog />} />
@@ -25,8 +29,17 @@ function App() {
           <Route path="/confirmation" element={<Confirmation />} />
           <Route path="/contacts" element={<Contacts />} />
           <Route path="/promotions" element={<Promotions />} />
+          <Route path="/admin" element={<Admin />} />
         </Routes>
       </main>
+    </>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppLayout />
     </BrowserRouter>
   );
 }

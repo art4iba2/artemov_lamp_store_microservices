@@ -1,20 +1,29 @@
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
+
 from pydantic import BaseModel, ConfigDict, Field
+
 
 class DictionaryCreate(BaseModel):
     name: str = Field(min_length=1, max_length=255)
+
+
 class DictionaryRead(DictionaryCreate):
     id: uuid.UUID
     model_config = ConfigDict(from_attributes=True)
 
+
 class ImageCreate(BaseModel):
     url: str
+
+
 class ImageRead(ImageCreate):
     id: uuid.UUID
     product_id: uuid.UUID
     model_config = ConfigDict(from_attributes=True)
+
+
 class ReviewRead(BaseModel):
     id: uuid.UUID
     product_id: uuid.UUID
@@ -23,6 +32,7 @@ class ReviewRead(BaseModel):
     text: str | None = None
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
+
 
 class ProductBase(BaseModel):
     title: str = Field(min_length=1, max_length=255)
@@ -38,8 +48,11 @@ class ProductBase(BaseModel):
     base_id: uuid.UUID | None = None
     supplier_id: uuid.UUID | None = None
 
+
 class ProductCreate(ProductBase):
     images: list[ImageCreate] = []
+
+
 class ProductUpdate(BaseModel):
     title: str | None = None
     description: str | None = None
@@ -54,12 +67,19 @@ class ProductUpdate(BaseModel):
     base_id: uuid.UUID | None = None
     supplier_id: uuid.UUID | None = None
 
+
+class ProductStockChange(BaseModel):
+    quantity: int = Field(gt=0)
+
+
 class ProductRead(ProductBase):
     id: uuid.UUID
     created_at: datetime
     images: list[ImageRead] = []
     reviews: list[ReviewRead] = []
     model_config = ConfigDict(from_attributes=True)
+
+
 class ProductList(BaseModel):
     items: list[ProductRead]
     total: int

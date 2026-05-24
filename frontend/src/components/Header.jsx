@@ -25,6 +25,7 @@ function Header() {
 
       <nav>
         <Link to="/catalog">Каталог</Link>
+        <Link to="/admin">Панель админа</Link>
         <Link to="/contacts">Контакты</Link>
 
         <div className="cart-icon">
