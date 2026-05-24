@@ -1,3 +1,4 @@
+
 services:
   postgres:
     image: postgres:17-alpine
@@ -55,7 +56,7 @@ services:
 
   frontend:
     build:
-      context: ../lamp-shop-front/shop-client
+      context: ./frontend
       args:
         VITE_PRODUCT_API_URL: http://localhost:8001
         VITE_ORDER_API_URL: http://localhost:8002

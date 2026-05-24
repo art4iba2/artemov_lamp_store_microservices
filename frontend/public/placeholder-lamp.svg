@@ -1,0 +1,6 @@
+<svg width="360" height="260" viewBox="0 0 360 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Лампа">
+  <rect width="360" height="260" rx="24" fill="#f3f4f6"/>
+  <path d="M180 42c-35 0-63 28-63 63 0 23 13 43 31 54v19h64v-19c18-11 31-31 31-54 0-35-28-63-63-63Z" fill="#fde68a" stroke="#111827" stroke-width="8"/>
+  <path d="M153 195h54M157 214h46M164 232h32" stroke="#111827" stroke-width="8" stroke-linecap="round"/>
+  <path d="M180 20v-8M112 48l-7-7M248 48l7-7" stroke="#111827" stroke-width="8" stroke-linecap="round"/>
+</svg>
