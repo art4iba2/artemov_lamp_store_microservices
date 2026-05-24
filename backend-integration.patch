@@ -1,0 +1,148 @@
+diff --git a/services/product_service/app/core/config.py b/services/product_service/app/core/config.py
+--- a/services/product_service/app/core/config.py
++++ b/services/product_service/app/core/config.py
+@@ -1,8 +1,12 @@
+ from pydantic_settings import BaseSettings, SettingsConfigDict
+
++
+ class Settings(BaseSettings):
+     app_name: str = "Product Service"
+     database_url: str
++    frontend_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
+     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
++
+ settings = Settings()
+diff --git a/services/product_service/app/main.py b/services/product_service/app/main.py
+--- a/services/product_service/app/main.py
++++ b/services/product_service/app/main.py
+@@ -1,9 +1,27 @@
+ from fastapi import FastAPI
++from fastapi.middleware.cors import CORSMiddleware
+ from app.api.dictionaries import router as dictionaries_router
+ from app.api.products import router as products_router
+ from app.core.config import settings
+
+ app = FastAPI(title=settings.app_name, version="0.1.0")
++
++origins = [
++    origin.strip()
++    for origin in settings.frontend_origins.split(",")
++    if origin.strip()
++]
++
++app.add_middleware(
++    CORSMiddleware,
++    allow_origins=origins,
++    allow_credentials=True,
++    allow_methods=["*"],
++    allow_headers=["*"],
++)
++
+ app.include_router(products_router)
+ app.include_router(dictionaries_router)
+
++
+ @app.get("/health", tags=["health"])
+ async def health():
+     return {"status": "ok", "service": settings.app_name}
+diff --git a/services/order_service/app/core/config.py b/services/order_service/app/core/config.py
+--- a/services/order_service/app/core/config.py
++++ b/services/order_service/app/core/config.py
+@@ -1,9 +1,13 @@
+ from pydantic_settings import BaseSettings, SettingsConfigDict
+
++
+ class Settings(BaseSettings):
+     app_name: str = "Order Service"
+     database_url: str
+     product_service_url: str = "http://localhost:8001"
++    frontend_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
+     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
++
+ settings = Settings()
+diff --git a/services/order_service/app/main.py b/services/order_service/app/main.py
+--- a/services/order_service/app/main.py
++++ b/services/order_service/app/main.py
+@@ -1,8 +1,26 @@
+ from fastapi import FastAPI
++from fastapi.middleware.cors import CORSMiddleware
+ from app.api.orders import router as orders_router
+ from app.core.config import settings
+
+ app = FastAPI(title=settings.app_name, version="0.1.0")
++
++origins = [
++    origin.strip()
++    for origin in settings.frontend_origins.split(",")
++    if origin.strip()
++]
++
++app.add_middleware(
++    CORSMiddleware,
++    allow_origins=origins,
++    allow_credentials=True,
++    allow_methods=["*"],
++    allow_headers=["*"],
++)
++
+ app.include_router(orders_router)
+
++
+ @app.get("/health", tags=["health"])
+ async def health():
+     return {"status": "ok", "service": settings.app_name}
+diff --git a/docker-compose.yml b/docker-compose.yml
+--- a/docker-compose.yml
++++ b/docker-compose.yml
+@@ -24,9 +24,14 @@ services:
+     environment:
+       DATABASE_URL: postgresql+asyncpg://lamp_user:lamp_password@postgres:5432/product_db
+       APP_NAME: Product Service
++      FRONTEND_ORIGINS: http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000
+     ports: ["8001:8000"]
+     depends_on:
+       postgres:
+         condition: service_healthy
++    healthcheck:
++      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
++      interval: 5s
++      timeout: 5s
++      retries: 20
+
+   order_service:
+@@ -36,12 +41,29 @@ services:
+       DATABASE_URL: postgresql+asyncpg://lamp_user:lamp_password@postgres:5432/order_db
+       PRODUCT_SERVICE_URL: http://product_service:8000
+       APP_NAME: Order Service
++      FRONTEND_ORIGINS: http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000
+     ports: ["8002:8000"]
+     depends_on:
+       postgres:
+         condition: service_healthy
+       product_service:
+-        condition: service_started
++        condition: service_healthy
++    healthcheck:
++      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
++      interval: 5s
++      timeout: 5s
++      retries: 20
++
++  frontend:
++    build:
++      context: https://github.com/art4iba2/lamp-shop-front.git#master:shop-client
++      args:
++        VITE_PRODUCT_API_URL: http://localhost:8001
++        VITE_ORDER_API_URL: http://localhost:8002
++    container_name: lamp_shop_frontend
++    ports: ["5173:80"]
++    depends_on:
++      product_service:
++        condition: service_healthy
++      order_service:
++        condition: service_healthy
+
+ volumes:
+   postgres_data:

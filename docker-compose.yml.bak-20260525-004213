@@ -22,16 +22,10 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://lamp_user:lamp_password@postgres:5432/product_db
       APP_NAME: Product Service
-      FRONTEND_ORIGINS: http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000
     ports: ["8001:8000"]
     depends_on:
       postgres:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
-      interval: 5s
-      timeout: 5s
-      retries: 20
 
   order_service:
     build: ./services/order_service
@@ -40,32 +34,12 @@ services:
       DATABASE_URL: postgresql+asyncpg://lamp_user:lamp_password@postgres:5432/order_db
       PRODUCT_SERVICE_URL: http://product_service:8000
       APP_NAME: Order Service
-      FRONTEND_ORIGINS: http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000
     ports: ["8002:8000"]
     depends_on:
       postgres:
         condition: service_healthy
       product_service:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
-      interval: 5s
-      timeout: 5s
-      retries: 20
-
-  frontend:
-    build:
-      context: ../lamp-shop-front/shop-client
-      args:
-        VITE_PRODUCT_API_URL: http://localhost:8001
-        VITE_ORDER_API_URL: http://localhost:8002
-    container_name: lamp_shop_frontend
-    ports: ["5173:80"]
-    depends_on:
-      product_service:
-        condition: service_healthy
-      order_service:
-        condition: service_healthy
+        condition: service_started
 
 volumes:
   postgres_data:
